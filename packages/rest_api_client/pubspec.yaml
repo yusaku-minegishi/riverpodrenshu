@@ -1,0 +1,20 @@
+name: rest_api_client
+description: REST API Clients.
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.0.3
+
+dependencies:
+  dio: ^5.1.1
+  retrofit: ^4.0.1
+  riverpod: ^2.3.0
+  riverpod_annotation: ^2.0.0
+
+dev_dependencies:
+  altive_lints: ^1.7.0
+  build_runner: ^2.2.0
+  retrofit_generator: ^7.0.1
+  riverpod_generator: ^2.0.0
+  test: ^1.21.1

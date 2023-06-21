@@ -1,0 +1,163 @@
+name: flutter_app_template
+repository: https://github.com/altive/flutter_app_template
+sdkPath: .fvm/flutter_sdk
+
+packages:
+  - "packages/*"
+
+command:
+  bootstrap:
+    runPubGetInParallel: true
+    hooks:
+      post: |
+        melos exec --flutter --dir-exists=lib/l10n -- "flutter gen-l10n"
+  clean:
+    hooks:
+      post: |
+        melos exec --flutter -- "flutter clean"
+        melos exec --flutter --file-exists="ios/Podfile.lock" -- "cd ios && rm Podfile.lock"
+        melos exec --flutter --file-exists="macos/Podfile.lock" -- "cd macos && rm Podfile.lock"
+  version:
+    branch: main
+
+scripts:
+  upgrade:
+    run: |
+      melos exec -- \
+        "flutter pub upgrade --major-versions && flutter pub upgrade"
+    description: Run upgrade the major version of the pub.
+    packageFilters:
+      flutter: true
+      dirExists: lib
+
+  analyze:
+    run: |
+      melos exec -- \
+        flutter analyze . --fatal-infos
+    description: Run analyze.
+    packageFilters:
+      flutter: true
+      dirExists: lib
+
+  custom_lint:
+    run: |
+      melos exec -- \
+        dart pub custom_lint
+    packageFilters:
+      dependsOn: "custom_lint"
+
+  format:
+    run: |
+      melos exec -- \
+        dart format --set-exit-if-changed lib/
+    description: Run format.
+    packageFilters:
+      flutter: true
+      dirExists: lib
+
+  fix:
+    run: |
+      melos exec -- \
+        dart fix --apply lib
+    description: Run dart fix.
+    packageFilters:
+      dirExists: lib
+
+  gen:
+    run: |
+      melos exec -c 1 -- \
+        flutter pub run build_runner build --delete-conflicting-outputs
+    description: Run generate code.
+    packageFilters:
+      dirExists: lib
+      dependsOn: "build_runner"
+
+  gen:watch:
+    run: |
+      melos exec -c 1 -- \
+        flutter pub run build_runner watch --delete-conflicting-outputs
+    description: Watch and run generate code.
+    packageFilters:
+      dirExists: lib
+      dependsOn: "build_runner"
+
+  test:
+    run: |
+      melos exec --fail-fast -- \
+        flutter test --coverage
+    description: Run flutter test.
+    packageFilters:
+      flutter: true
+      dirExists: test
+
+  pod:all:
+    run: |
+      melos run pod:ios --no-select
+      melos run pod:macos --no-select
+    description: Run all pod install.
+
+  pod:ios:
+    run: |
+      melos exec -- \
+        "cd ios && pod install"
+    description: Run pod install on iOS.
+    packageFilters:
+      dirExists: [lib, ios]
+      fileExists: "ios/Podfile"
+
+  pod:macos:
+    run: |
+      melos exec -- \
+        "cd macos && pod install"
+    description: Run pod install on macOS.
+    packageFilters:
+      dirExists: [lib, macos]
+      fileExists: "macos/Podfile"
+
+  build:android:prod:
+    run: |
+      melos exec -c 1 -- \
+        flutter build appbundle --dart-define-from-file=dart_defines/prod.json
+    description: Build the AppBundle for the production app.
+    packageFilters:
+      flutter: true
+      dirExists: [lib, android]
+
+  upload:ios:prod:
+    run: |
+      melos exec -c 1 -- \
+        flutter build ipa --dart-define-from-file=dart_defines/prod.json --export-options-plist="ios/prod/ExportOptions.plist"
+    description: Upload the IPA for the production app.
+    packageFilters:
+      flutter: true
+      dirExists: [lib, ios]
+
+  flutterfire:dev:
+    run: |
+      melos exec -c 1 -- \
+        flutterfire configure -y -o lib/environment/src/firebase_options_dev.dart -p flutter-app-template-dev -a jp.co.altive.fat.dev -i jp.co.altive.fat.dev -m jp.co.altive.fat.dev
+    description: Generate the Firebase configuration file for the development app.
+    packageFilters:
+      flutter: true
+      dirExists: [lib, ios, android]
+      dependsOn: "firebase_core"
+
+  flutterfire:stg:
+    run: |
+      melos exec -c 1 -- \
+        flutterfire configure -y -o lib/environment/src/firebase_options_stg.dart -p flutter-app-template-stg -a jp.co.altive.fat.stg -i jp.co.altive.fat.stg -m jp.co.altive.fat.stg
+    description: Generate the Firebase configuration file for the staging app.
+    packageFilters:
+      flutter: true
+      dirExists: [lib, ios, android]
+      dependsOn: "firebase_core"
+
+  flutterfire:prod:
+    run: |
+      melos exec -c 1 -- \
+        flutterfire configure -y -o lib/environment/src/firebase_options_prod.dart -p altive-fat -a jp.co.altive.fat -i jp.co.altive.fat -m jp.co.altive.fat
+    description: Generate the Firebase configuration file for the production app.
+    packageFilters:
+      flutter: true
+      dirExists: [lib, ios, android]
+      dependsOn: "firebase_core"
